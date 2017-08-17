@@ -16,6 +16,7 @@
  */
 
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
@@ -91,8 +92,9 @@ void setup() {
 
   // Calculating battery voltage before bringing up Wifi
   sensorValue = analogRead(A0);
-  voltage = sensorValue * (4.5 / 1023.0);  // correct for new black boards
+  //voltage = sensorValue * (4.5 / 1023.0);  // correct for new black boards
   //voltage = sensorValue * (4.65 / 1023.0); // correct for the old green boards
+  voltage = sensorValue * (5.65 / 1023.0);  // board on the patio
   state["voltage"] = round(voltage*100)/100.00;
   state["adc"] = sensorValue;
   state["reset_reason"] = ESP.getResetReason();
@@ -160,8 +162,14 @@ void loop() {
       if (mqttclient.connect(String(ESP.getChipId()).c_str(), mqtt_user, mqtt_password)) {
         Serial.println(" connected.");
 #ifdef BUTTON_MODE
+        HTTPClient http;
+        http.begin("http://192.168.1.10:8123/api/services/light/toggle");
+        http.addHeader("Content-Type", "application/json");
+        http.POST("{\"entity_id\": \"light.stove\" }");
+        http.writeToStream(&Serial);
+        http.end();
         // toggle the button
-        mqttclient.publish(mqtt_toggle_topic, String("TOGGLE").c_str(), true);
+        //mqttclient.publish(mqtt_toggle_topic, String("TOGGLE").c_str(), true);
 #else
         // publish the sensor info
         memset(tmpBuf, 0, sizeof(tmpBuf));
