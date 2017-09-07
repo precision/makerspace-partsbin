@@ -92,9 +92,9 @@ void setup() {
 
   // Calculating battery voltage before bringing up Wifi
   sensorValue = analogRead(A0);
-  //voltage = sensorValue * (4.5 / 1023.0);  // correct for new black boards
+  voltage = sensorValue * (4.5 / 1023.0);  // correct for new black boards
   //voltage = sensorValue * (4.65 / 1023.0); // correct for the old green boards
-  voltage = sensorValue * (5.65 / 1023.0);  // board on the patio
+  //voltage = sensorValue * (5.65 / 1023.0);  // board on the patio
   state["voltage"] = round(voltage*100)/100.00;
   state["adc"] = sensorValue;
   state["reset_reason"] = ESP.getResetReason();
