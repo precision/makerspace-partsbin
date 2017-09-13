@@ -92,9 +92,7 @@ void setup() {
 
   // Calculating battery voltage before bringing up Wifi
   sensorValue = analogRead(A0);
-  voltage = sensorValue * (4.5 / 1023.0);  // correct for new black boards
-  //voltage = sensorValue * (4.65 / 1023.0); // correct for the old green boards
-  //voltage = sensorValue * (5.65 / 1023.0);  // board on the patio
+  voltage = sensorValue * (VOLTAGE_DIVIDER / 1023.0);
   state["voltage"] = round(voltage*100)/100.00;
   state["adc"] = sensorValue;
   state["reset_reason"] = ESP.getResetReason();
@@ -103,7 +101,7 @@ void setup() {
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   WiFi.config(ip, gateway, subnet);
-  WiFi.begin(ssid, password, channel, bssid);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD, channel, bssid);
   Serial.println("");
   Serial.print("Connecting");
   int connect_counter = 0;
@@ -128,7 +126,7 @@ void setup() {
     wifi["mac"] = WiFi.macAddress();
 
     Serial.print("Connected to: ");
-    Serial.println(ssid);
+    Serial.println(WIFI_SSID);
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     Serial.println("");
@@ -156,25 +154,28 @@ void loop() {
   // Only do the mqtt dance if we're connected to Wifi
   if (WiFi.status() == WL_CONNECTED) {
     // Send to MQTT
-    mqttclient.setServer(mqtt_server_ip, 1883);
+    mqttclient.setServer(MQTT_SERVER_IP, 1883);
     while (!mqttclient.connected()) {
       Serial.print("Attempting MQTT connection...");
-      if (mqttclient.connect(String(ESP.getChipId()).c_str(), mqtt_user, mqtt_password)) {
+      if (mqttclient.connect(String(ESP.getChipId()).c_str(), MQTT_USER, MQTT_PASSWORD)) {
         Serial.println(" connected.");
 #ifdef BUTTON_MODE
+  #ifdef HTTP_API
         HTTPClient http;
-        http.begin("http://192.168.1.10:8123/api/services/light/toggle");
+        http.begin(HTTP_URI);
         http.addHeader("Content-Type", "application/json");
-        http.POST("{\"entity_id\": \"light.stove\" }");
+        http.POST(HTTP_ENTITY);
         http.writeToStream(&Serial);
         http.end();
+  #else
         // toggle the button
-        //mqttclient.publish(mqtt_toggle_topic, String("TOGGLE").c_str(), true);
+        mqttclient.publish(MQTT_TOGGLE_TOPIC, String("TOGGLE").c_str(), true);
+  #endif
 #else
         // publish the sensor info
         memset(tmpBuf, 0, sizeof(tmpBuf));
         sensor.printTo(tmpBuf, sizeof(tmpBuf));
-        mqttclient.publish(mqtt_sensor_topic, tmpBuf, true);
+        mqttclient.publish(MQTT_SENSOR_TOPIC, tmpBuf, true);
         sensor.prettyPrintTo(Serial);
 #endif
         state["uptime"] = millis() - boot_timer;
@@ -182,7 +183,7 @@ void loop() {
         state.printTo(tmpBuf, sizeof(tmpBuf));
         state.prettyPrintTo(Serial);
 
-        mqttclient.publish(mqtt_state_topic, tmpBuf, true);
+        mqttclient.publish(MQTT_STATE_TOPIC, tmpBuf, true);
       } else {
         Serial.print(" failed, Error value=");
         Serial.println(mqttclient.state());
