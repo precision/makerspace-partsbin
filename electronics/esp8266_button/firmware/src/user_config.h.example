@@ -16,7 +16,7 @@
  */
 
 // Basic Configuration
-#define MQTT_NAME              "testsensor"
+#define MQTT_NAME         "testsensor"
 
 // Basic Configuration
 #define MOSFET_PIN        12                         // on the dash board pin 12 is the mosfet signal pin
@@ -36,6 +36,7 @@
 #ifdef BUTTON_MODE
     #define MQTT_TOGGLE_TOPIC "cmnd/cord/Power"
   #ifdef HTTP_API
+    // use the home-assistant rest api instead of mqtt
     #define HTTP_URI          "http://192.168.1.1:8123/api/services/light/toggle"
     #define HTTP_ENTITY       "{\"entity_id\": \"light.test\" }"
   #endif
@@ -47,10 +48,11 @@
 #define       WIFI_SSID     "yourssid"
 #define       WIFI_PASSWORD "yourpw"
 
-// Specifying a static address drops connect time down from ~4.5s to ~2.5s
-IPAddress     ip       (192,168,1,100);
-IPAddress     dns      (8,8,8,8);
-IPAddress     gateway  (192,168,1,1);
-IPAddress     subnet   (255,255,255,0);
-int32_t       channel   = 1;               // these drop connect time down to ~1.0s
-unsigned char bssid[18] = { 0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00 }; // AP's Mac address
+// specifying a static address drops connect time down from ~4.5s to ~2.5s
+IPAddress     ip            (192,168,1,100);
+IPAddress     dns           (8,8,8,8);
+IPAddress     gateway       (192,168,1,1);
+IPAddress     subnet        (255,255,255,0);
+// specifying the AP bssid and channel drops connect time down to ~1.1s
+int32_t       channel     = 1;
+unsigned char bssid[18]   = { 0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00 }; // AP's Mac address
