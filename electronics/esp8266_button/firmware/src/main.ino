@@ -51,6 +51,7 @@ boolean readBMP180() {
     Serial.println("Could not find a valid BMP180 sensor.");
     return false;
   }
+  delay(100);
 
   sensors_event_t event;
   bmp.getEvent(&event);
@@ -69,6 +70,7 @@ boolean readBMP280() {
     Serial.println("Could not find a valid BME280 sensor.");
     return false;
   }
+  delay(100);
 
   temperature = bme.readTemperature();
   pressure = bme.readPressure() / 100.0F;
@@ -91,8 +93,7 @@ void setup() {
 
   // Calculating battery voltage before bringing up Wifi
   sensorValue = analogRead(A0);
-  voltage = sensorValue * (4.5 / 1023.0);  // correct for new black boards
-  //voltage = sensorValue * (4.65 / 1023.0); // correct for the old green boards
+  voltage = sensorValue * (VOLTAGE_DIVIDER / 1023.0);  // correct for new black boards
   state["voltage"] = round(voltage*100)/100.00;
   state["adc"] = sensorValue;
   state["reset_reason"] = ESP.getResetReason();
@@ -100,8 +101,8 @@ void setup() {
   // Connect to WiFi
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
-  WiFi.config(ip, gateway, subnet);
-  WiFi.begin(ssid, password, channel, bssid);
+  WiFi.config(IP, GATEWAY, SUBNET);
+  WiFi.begin(SSID, PASSWORD, CHANNEL, BSSID);
   Serial.println("");
   Serial.print("Connecting");
   int connect_counter = 0;
@@ -120,13 +121,13 @@ void setup() {
   if (WiFi.status() == WL_CONNECTED) {
     // Store the WiFi in the JSON
     wifi["ip"] = WiFi.localIP().toString();
-    wifi["ssid"] = String(WiFi.SSID());
+    wifi["ssid"] = String(SSID);
     wifi["rssi"] = WiFi.RSSI();
     wifi["bssid"] = WiFi.BSSIDstr();
     wifi["mac"] = WiFi.macAddress();
 
     Serial.print("Connected to: ");
-    Serial.println(ssid);
+    Serial.println(SSID);
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     Serial.println("");
@@ -154,19 +155,19 @@ void loop() {
   // Only do the mqtt dance if we're connected to Wifi
   if (WiFi.status() == WL_CONNECTED) {
     // Send to MQTT
-    mqttclient.setServer(mqtt_server_ip, 1883);
+    mqttclient.setServer(MQTT_SERVER_IP, 1883);
     while (!mqttclient.connected()) {
       Serial.print("Attempting MQTT connection...");
-      if (mqttclient.connect(String(ESP.getChipId()).c_str(), mqtt_user, mqtt_password)) {
+      if (mqttclient.connect(String(ESP.getChipId()).c_str(), MQTT_USER, MQTT_PASSWORD)) {
         Serial.println(" connected.");
 #ifdef BUTTON_MODE
         // toggle the button
-        mqttclient.publish(mqtt_toggle_topic, String("TOGGLE").c_str(), true);
+        mqttclient.publish(MQTT_TOGGLE_TOPIC, String("TOGGLE").c_str(), true);
 #else
         // publish the sensor info
         memset(tmpBuf, 0, sizeof(tmpBuf));
         sensor.printTo(tmpBuf, sizeof(tmpBuf));
-        mqttclient.publish(mqtt_sensor_topic, tmpBuf, true);
+        mqttclient.publish(MQTT_SENSOR_TOPIC, tmpBuf, true);
         sensor.prettyPrintTo(Serial);
 #endif
         state["uptime"] = millis() - boot_timer;
@@ -174,7 +175,7 @@ void loop() {
         state.printTo(tmpBuf, sizeof(tmpBuf));
         state.prettyPrintTo(Serial);
 
-        mqttclient.publish(mqtt_state_topic, tmpBuf, true);
+        mqttclient.publish(MQTT_STATE_TOPIC, tmpBuf, true);
       } else {
         Serial.print(" failed, Error value=");
         Serial.println(mqttclient.state());
