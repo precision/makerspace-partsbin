@@ -100,8 +100,8 @@ void setup() {
   // Connect to WiFi
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
-  WiFi.config(ip, gateway, subnet);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD, channel, bssid);
+  WiFi.config(IP, GATEWAY, SUBNET);
+  WiFi.begin(SSID, PASSWORD, CHANNEL, BSSID);
   Serial.println("");
   Serial.print("Connecting");
   int connect_counter = 0;
@@ -120,13 +120,13 @@ void setup() {
   if (WiFi.status() == WL_CONNECTED) {
     // Store the WiFi in the JSON
     wifi["ip"] = WiFi.localIP().toString();
-    wifi["ssid"] = String(WiFi.SSID());
+    wifi["ssid"] = SSID;
     wifi["rssi"] = WiFi.RSSI();
     wifi["bssid"] = WiFi.BSSIDstr();
     wifi["mac"] = WiFi.macAddress();
 
     Serial.print("Connected to: ");
-    Serial.println(WIFI_SSID);
+    Serial.println(SSID);
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     Serial.println("");
